@@ -7,7 +7,6 @@ import Html.Events as Events
 import Http
 import Json.Decode as Json exposing (Decoder)
 import Dict exposing (Dict)
-import Company
 
 
 main : Program () Model Msg

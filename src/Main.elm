@@ -1,9 +1,10 @@
 module Main exposing (..)
 
 import Browser
-import Html exposing (Html)
-import Html.Attributes as Attr
-import Html.Events as Events
+import Html as Html exposing (Html)
+import Element as El exposing (Element)
+import Element.Input as Input
+import Element.Events as Events
 import Http
 import Json.Decode as Json exposing (Decoder)
 import Dict exposing (Dict)
@@ -132,15 +133,17 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    Html.div []
-        [ viewSelector model
-        , Maybe.map viewCompany
-            (Dict.get model.selectedCompany model.companies)
-            |> Maybe.withDefault (Html.text "")
-        ]
+    El.layout []
+        <| El.column []
+            [ El.el [] <| El.text "FANG Fetcher"
+            , viewSelector model
+            , Maybe.map viewCompany
+                (Dict.get model.selectedCompany model.companies)
+                |> Maybe.withDefault El.none
+            ]
 
 
-viewSelector : Model -> Html Msg
+viewSelector : Model -> Element Msg
 viewSelector model =
     let
         viewCompanyOption c =
@@ -148,62 +151,62 @@ viewSelector model =
                 c.companyName
                 (c.companyName == model.selectedCompany)
     in
-        Html.div []
+        El.row []
             <| List.map viewCompanyOption (Dict.values model.companies)
 
 
-viewOption : String -> String -> Bool -> Html Msg
+viewOption : String -> String -> Bool -> Element Msg
 viewOption key title isSelected =
-    Html.span [ Events.onClick <| SelectCompany key ]
-        [ Html.text
+    El.el [ Events.onClick <| SelectCompany key ]
+        (El.text
             <| if isSelected then
                 String.toUpper title
                else
                 title
-        ]
+        )
 
 
-viewCompany : Company -> Html Msg
+viewCompany : Company -> Element Msg
 viewCompany company =
-    Html.div []
-        [ Html.text company.githubOrgName
-        , viewRepos company
+    El.column []
+        [ viewRepos company
         ]
 
 
-viewRepos : Company -> Html Msg
+viewRepos : Company -> Element Msg
 viewRepos company =
     let
         viewRepo repo =
-            Html.div [] [ Html.text repo.repoName ]
+            El.el [] <| El.text repo.repoName
 
         viewNotLoaded maybeError =
-            Html.div []
-                [ Html.text <| Maybe.withDefault "" maybeError
-                , Html.button
-                    [ Events.onClick <| RequestRepos company.githubOrgName
-                    ]
-                    [ Html.text <| "Load repos from " ++ company.companyName ]
+            El.column []
+                [ El.text <| Maybe.withDefault "" maybeError
+                , Input.button []
+                    { onPress = Just <| RequestRepos company.githubOrgName
+                    , label = El.text <| "Load repos from " ++ company.companyName
+                    }
                 ]
 
         viewLoading =
-            Html.text "Loading ..."
+            El.text "Loading ..."
     in
-        Html.div []
+        El.el []
             <| case company.repos of
                 Loaded result ->
                     case result of
                         Ok repos ->
-                            List.map viewRepo repos
+                            El.column []
+                                <| List.map viewRepo repos
 
                         Err error ->
-                            [ viewNotLoaded (Just "Hmm, something went wrong. Try again?") ]
+                            viewNotLoaded (Just "Hmm, something went wrong. Try again?")
 
                 NotLoaded ->
-                    [ viewNotLoaded Nothing ]
+                    viewNotLoaded Nothing
 
                 Loading ->
-                    [ viewLoading ]
+                    viewLoading
 
 
 

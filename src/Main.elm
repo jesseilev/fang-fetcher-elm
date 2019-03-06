@@ -387,7 +387,7 @@ spaceScale windowSize =
     let
         baseSpace =
             if deviceIsPhonePortrait windowSize then
-                9
+                8
             else
                 12
     in

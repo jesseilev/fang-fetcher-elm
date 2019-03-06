@@ -165,12 +165,11 @@ githubUrl githubOrgName =
 
 
 colorPalette =
-    { darkGrey = El.rgb 0.35 0.35 0.35
-    , darkPurple = El.rgb 0.17 0.15 0.18
-    , darkestGrey = El.rgb 0.1 0.1 0.1
+    { darkPurple = El.rgb 0.17 0.15 0.18
+    , darkestGrey = El.rgb 0.04 0.04 0.04
+    , darkGrey = El.rgb 0.23 0.23 0.23
     , white = El.rgb 1 1 1
-    , lightGrey = El.rgb 0.9 0.9 0.9
-    , lightestGrey = El.rgb 0.95 0.95 0.95
+    , lightGrey = El.rgb 0.7 0.7 0.7
     , grey = El.rgb 0.4 0.4 0.4
     , red = El.rgb 0.99 0.25 0.1
     , clear = El.rgba 0 0 0 0
@@ -193,7 +192,7 @@ layout =
 
 
 fontScale =
-    round << El.modular 16 1.25
+    round << El.modular 18 1.25
 
 
 paddingScale =
@@ -249,7 +248,7 @@ viewHeader =
             [ Font.size <| fontScale -1
             , Font.light
             , Font.italic
-            , Font.color colorPalette.grey
+            , Font.color colorPalette.darkGrey
             , Font.center
             , El.centerX
             , El.centerY
@@ -282,7 +281,7 @@ viewMain : Model -> Element Msg
 viewMain model =
     El.column
         [ El.centerX
-        , El.width (El.fill |> El.minimum 300 |> El.maximum 750)
+        , El.width (El.fill |> El.minimum 300 |> El.maximum 900)
         , El.height El.fill
         , Border.color <| colorPalette.darkestGrey
         , Border.width 3
@@ -314,7 +313,7 @@ viewOption : String -> String -> Bool -> Element Msg
 viewOption key title isSelected =
     El.el
         [ Events.onClick <| SelectCompany key
-        , El.padding <| paddingScale 1
+        , El.padding <| paddingScale 2
         , El.width <| El.fillPortion 1
         , Background.color
             <| if isSelected then
@@ -432,7 +431,7 @@ viewRepo repo =
             }
     in
         El.column
-            [ El.width (El.fill |> El.minimum 200 |> El.maximum 400)
+            [ El.width (El.fill |> El.minimum 250 |> El.maximum 500)
             , El.spacing <| paddingScale 1
             , El.padding <| paddingScale 3
             , El.clipX
@@ -445,16 +444,17 @@ viewRepo repo =
             , El.mouseOver [ Border.shadow <| shadowWithBlur 8 ]
             ]
             [ El.link
-                [ Font.color colorPalette.red
-                , Font.light
-                , El.mouseOver [ Font.color colorPalette.white ]
+                [ Font.color colorPalette.lightGrey
+                , Font.extraLight
+                , Font.size <| fontScale 0
+                , El.mouseOver [ Font.color colorPalette.red ]
                 ]
                 { label = El.text repo.repoName
                 , url = repo.htmlUrl
                 }
             , El.el
                 [ Font.color colorPalette.darkestGrey
-                , Font.size <| fontScale -1
+                , Font.size <| fontScale 0
                 ]
                 <| El.text ("★ " ++ prettyInt repo.stars)
             , Maybe.map viewDescription repo.description

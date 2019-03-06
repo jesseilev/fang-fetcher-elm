@@ -119,7 +119,7 @@ subscriptions model =
     Sub.batch
         [ Browser.Events.onResize WindowResize
         , if isFetching model then
-            Time.every 250 LoadingTick
+            Time.every 30 LoadingTick
           else
             Sub.none
         ]
@@ -632,6 +632,12 @@ viewVampire windowSize dripCount =
         viewLine color lineContent =
             El.el [ Font.color color ]
                 <| El.text lineContent
+
+        bloodDrips =
+            ListEx.cycle dripCount asciiBloodDrips
+                |> List.map (viewLine colorPalette.red)
+                |> List.reverse
+                |> List.take 10
     in
         El.column
             [ El.alignBottom
@@ -639,16 +645,27 @@ viewVampire windowSize dripCount =
             , Font.bold
             ]
             <| (viewLine colorPalette.lighterGrey asciiVampire)
-            :: List.map (viewLine colorPalette.red)
-                (List.repeat dripCount asciiBloodDrip)
+            :: bloodDrips
 
 
 asciiVampire =
     "(^,..,^)"
 
 
-asciiBloodDrip =
-    "    '"
+asciiBloodDrips =
+    let
+        drip =
+            "    '"
+
+        blank =
+            "     "
+    in
+        drip
+            :: List.repeat 6 blank
+            ++ [ drip ]
+            ++ List.repeat 15 blank
+            ++ [ drip ]
+            ++ List.repeat 10 blank
 
 
 

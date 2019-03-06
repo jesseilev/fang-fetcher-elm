@@ -20,7 +20,7 @@ main =
         { init = \_ -> initApp
         , subscriptions = subscriptions
         , update = update
-        , view = view
+        , view = viewRoot
         }
 
 
@@ -124,7 +124,7 @@ update msg model =
         GotRepos githubOrgName result ->
             let
                 top5ReposResult =
-                    Result.map (List.take 30) result
+                    Result.map (List.take 18) result
                         |> Debug.log "result"
 
                 updateReposInCompany company =
@@ -166,65 +166,127 @@ githubUrl githubOrgName =
 
 
 
--- VIEW
-
-
-colorPalette =
-    { darkPurple = El.rgb 0.17 0.15 0.18
-    , darkestGrey = El.rgb 0.05 0.05 0.05
-    , darkGrey = El.rgb 0.2 0.2 0.2
-    , white = El.rgb 1 1 1
-    , lightGrey = El.rgb 0.7 0.7 0.7
-    , grey = El.rgb 0.4 0.4 0.4
-    , red = El.rgb 0.99 0.25 0.1
-    , clear = El.rgba 0 0 0 0
-    }
-
-
-colors =
-    { optionSelected = colorPalette.darkPurple
-    , optionUnselected = colorPalette.darkPurple
-    , color1 =
-        colorPalette.lightGrey
-        --, color2 = colorPalette.darkPurple
-    }
-
-
-layout =
-    { paddingSmall = 8
-    , paddingLarge = 16
-    }
+-- STYLES
 
 
 fontScale =
     round << El.modular 18 1.25
 
 
-paddingScale =
+shadowWithBlur blur =
+    { offset = ( 1, 1 )
+    , size = 0
+    , blur = blur
+    , color = colorPalette.darkestGrey
+    }
+
+
+colorPalette =
+    { darkPurple = El.rgb 0.19 0.17 0.21
+    , darkestGrey = El.rgb 0.05 0.05 0.05
+    , darkGrey = El.rgb 0.2 0.2 0.2
+    , white = El.rgb 1 1 1
+    , lightGrey = El.rgb 0.7 0.7 0.7
+    , grey = El.rgb 0.4 0.4 0.4
+    , red = El.rgb 0.99 0.1 0.2
+    , clear = El.rgba 0 0 0 0
+    }
+
+
+styles =
+    { root =
+        [ Font.size <| fontScale 1
+        , Font.color colorPalette.darkestGrey
+        , Background.color colorPalette.darkPurple
+        ]
+    , header =
+        [ Background.color <| colorPalette.darkestGrey
+        , Font.size <| fontScale 3
+        , Font.color colorPalette.grey
+        ]
+    , headerSubtitle =
+        [ Font.size <| fontScale -1
+        , Font.color colorPalette.darkGrey
+        , Font.center
+        ]
+    , footer =
+        [ Background.color colorPalette.darkestGrey
+        , Font.color colorPalette.grey
+        , Font.size <| fontScale -1
+        , Border.color <| colorPalette.darkPurple
+        ]
+    , main =
+        [ Border.color <| colorPalette.darkestGrey
+        , Border.width 3
+        ]
+    , selector = [ El.pointer ]
+    , selectorOption =
+        [ Border.color colorPalette.darkestGrey
+        , Font.color colorPalette.grey
+        , El.mouseOver [ Font.color colorPalette.lightGrey ]
+        ]
+    , button =
+        [ Font.color colorPalette.lightGrey
+        , Border.color colorPalette.clear
+        , Border.rounded 2
+        , Border.shadow <| shadowWithBlur 1
+        , El.mouseOver
+            [ Font.color colorPalette.red
+            , Border.shadow <| shadowWithBlur 8
+            ]
+        ]
+    , company =
+        [ Background.color colorPalette.darkPurple ]
+    , repo =
+        [ Background.color colorPalette.darkPurple
+        , Border.color colorPalette.darkestGrey
+        , Border.width 0
+        , Border.rounded 2
+        , Border.shadow <| shadowWithBlur 1
+        , El.mouseOver [ Border.shadow <| shadowWithBlur 8 ]
+        ]
+    , repoLink =
+        [ Font.color colorPalette.lightGrey
+        , Font.extraLight
+        , Font.size <| fontScale 0
+        , El.mouseOver [ Font.color colorPalette.red ]
+        ]
+    , repoDescription =
+        [ Font.size <| fontScale -1
+        , Font.light
+        , Font.color colorPalette.grey
+        ]
+    , repoStarsCount =
+        [ Font.color colorPalette.darkestGrey
+        , Font.size <| fontScale 0
+        ]
+    }
+
+
+
+-- VIEW
+
+
+spaceScale =
     round << El.modular 12 1.5
 
 
-view : Model -> Html Msg
-view model =
+viewRoot : Model -> Html Msg
+viewRoot model =
     El.layoutWith
         { options =
             [ El.focusStyle
-                { borderColor = Nothing
+                { borderColor = Just colorPalette.red
                 , backgroundColor = Nothing
-                , shadow = Nothing
+                , shadow = Just <| shadowWithBlur 0
                 }
             ]
         }
-        [ El.height El.fill
-        , Font.size <| fontScale 1
-        , Font.color colorPalette.darkestGrey
-        , Background.color colorPalette.darkPurple
-        , El.scrollbarY
-        ]
+        (styles.root ++ [ El.height El.fill, El.scrollbarY ])
         <| El.column
             [ El.width El.fill
             , El.height El.fill
-            , El.spacing <| paddingScale 4
+            , El.spacing <| spaceScale 4
             ]
             [ viewHeader
             , viewMain model
@@ -235,27 +297,18 @@ view model =
 viewHeader : Element Msg
 viewHeader =
     El.column
-        [ El.padding <| paddingScale 4
-        , El.width <| El.fill
-        , Background.color <| colorPalette.darkestGrey
-        , El.spacing <| paddingScale 2
-        ]
+        (styles.header
+            ++ [ El.padding <| spaceScale 4
+               , El.width <| El.fill
+               , El.spacing <| spaceScale 2
+               ]
+        )
         [ El.el
-            [ Font.size <| fontScale 3
-            , Font.color colorPalette.grey
-            , El.centerX
+            [ El.centerX
             , El.centerY
             ]
             <| El.text "FANG Fetcher"
-        , El.paragraph
-            [ Font.size <| fontScale -1
-              --, Font.light
-              --, Font.italic
-            , Font.color colorPalette.darkGrey
-            , Font.center
-            , El.centerX
-            , El.centerY
-            ]
+        , El.paragraph (styles.headerSubtitle ++ [ El.centerX, El.centerY ])
             [ El.text
                 <| "Sink your teeth into the repositories "
                 ++ "of tech's most eternally young-blooded companies."
@@ -266,16 +319,14 @@ viewHeader =
 viewFooter : Element Msg
 viewFooter =
     El.row
-        [ El.width El.fill
-        , El.padding <| paddingScale 1
-        , El.alignBottom
-        , Background.color colorPalette.darkestGrey
-        , Font.color colorPalette.grey
-        , Font.size <| fontScale -1
-        , Border.color <| colorPalette.darkPurple
-        ]
+        (styles.footer
+            ++ [ El.width El.fill
+               , El.padding <| spaceScale 1
+               , El.alignBottom
+               ]
+        )
         [ El.link []
-            { label = El.text " Github"
+            { label = El.text "Github"
             , url = "https://github.com/jesseilev/fang-fetcher-elm"
             }
         ]
@@ -284,12 +335,12 @@ viewFooter =
 viewMain : Model -> Element Msg
 viewMain model =
     El.column
-        [ El.centerX
-        , El.width (El.fill |> El.minimum 300 |> El.maximum 950)
-        , El.height El.fill
-        , Border.color <| colorPalette.darkestGrey
-        , Border.width 3
-        ]
+        (styles.main
+            ++ [ El.centerX
+               , El.width (El.fill |> El.minimum 300 |> El.maximum 950)
+               , El.height El.fill
+               ]
+        )
         [ viewSelector model
         , ListEx.find (\c -> c.companyName == model.selectedCompany) model.companies
             |> Maybe.map viewCompany
@@ -305,40 +356,36 @@ viewSelector model =
                 c.companyName
                 (c.companyName == model.selectedCompany)
     in
-        El.row
-            [ El.width El.fill
-            , El.spaceEvenly
-            , El.pointer
-            ]
+        El.row (styles.selector ++ [ El.width El.fill, El.spaceEvenly ])
             <| List.map viewCompanyOption model.companies
 
 
 viewOption : String -> String -> Bool -> Element Msg
 viewOption key title isSelected =
     El.el
-        [ Events.onClick <| SelectCompany key
-        , El.padding <| paddingScale 2
-        , El.width <| El.fillPortion 1
-        , Background.color
-            <| if isSelected then
-                colorPalette.darkPurple
-               else
-                colorPalette.darkestGrey
-        , Border.color colorPalette.darkestGrey
-        , Font.color colorPalette.grey
-        , El.mouseOver [ Font.color colorPalette.lightGrey ]
-        ]
+        (styles.selectorOption
+            ++ [ El.padding <| spaceScale 2
+               , El.width <| El.fillPortion 1
+               , Events.onClick <| SelectCompany key
+               , Background.color
+                    <| if isSelected then
+                        colorPalette.darkPurple
+                       else
+                        colorPalette.darkestGrey
+               ]
+        )
         <| El.text title
 
 
 viewCompany : Company -> Element Msg
 viewCompany company =
     El.column
-        [ El.width El.fill
-        , El.height El.fill
-        , Background.color colors.optionSelected
-        , El.height El.fill
-        ]
+        (styles.company
+            ++ [ El.width El.fill
+               , El.height El.fill
+               , El.height El.fill
+               ]
+        )
         [ viewRepos company
         ]
 
@@ -346,13 +393,6 @@ viewCompany company =
 viewRepos : Company -> Element Msg
 viewRepos company =
     let
-        shadowWithBlur blur =
-            { offset = ( 1, 1 )
-            , size = 0
-            , blur = blur
-            , color = colorPalette.darkestGrey
-            }
-
         viewNotLoaded maybeError =
             El.column
                 [ El.centerX
@@ -362,20 +402,12 @@ viewRepos company =
                 ]
                 [ El.text <| Maybe.withDefault "" maybeError
                 , Input.button
-                    [ El.centerX
-                    , El.centerY
-                    , El.padding <| paddingScale 4
-                    , Font.color colorPalette.grey
-                    , Border.color colorPalette.clear
-                    , Border.rounded 2
-                    , Border.width 0
-                    , Border.shadow <| shadowWithBlur 1
-                    , El.mouseOver
-                        [ Font.color colorPalette.red
-                        , Border.color <| colorPalette.red
-                        , Border.shadow <| shadowWithBlur 8
-                        ]
-                    ]
+                    (styles.button
+                        ++ [ El.centerX
+                           , El.centerY
+                           , El.padding <| spaceScale 4
+                           ]
+                    )
                     { onPress = Just <| RequestRepos company.githubOrgName
                     , label =
                         El.el [ El.centerX ]
@@ -401,8 +433,8 @@ viewRepos company =
                         Ok repos ->
                             El.wrappedRow
                                 [ El.spaceEvenly
-                                , El.spacing <| paddingScale 4
-                                , El.padding <| paddingScale 4
+                                , El.spacing <| spaceScale 4
+                                , El.padding <| spaceScale 4
                                 ]
                                 <| List.map viewRepo repos
 
@@ -420,46 +452,23 @@ viewRepo : Repo -> Element Msg
 viewRepo repo =
     let
         viewDescription description =
-            El.paragraph
-                [ Font.size <| fontScale -1
-                , Font.light
-                , Font.color colorPalette.grey
-                ]
+            El.paragraph styles.repoDescription
                 [ El.text description ]
-
-        shadowWithBlur blur =
-            { offset = ( 1, 1 )
-            , size = 0
-            , blur = blur
-            , color = colorPalette.darkestGrey
-            }
     in
         El.column
-            [ El.width (El.fill |> El.minimum 250 |> El.maximum 500)
-            , El.spacing <| paddingScale 1
-            , El.padding <| paddingScale 3
-            , El.clipX
-            , El.scrollbarX
-            , Background.color colorPalette.darkPurple
-            , Border.color colorPalette.darkestGrey
-            , Border.width 0
-            , Border.rounded 2
-            , Border.shadow <| shadowWithBlur 1
-            , El.mouseOver [ Border.shadow <| shadowWithBlur 8 ]
-            ]
-            [ El.link
-                [ Font.color colorPalette.lightGrey
-                , Font.extraLight
-                , Font.size <| fontScale 0
-                , El.mouseOver [ Font.color colorPalette.red ]
-                ]
+            (styles.repo
+                ++ [ El.width (El.fill |> El.minimum 250 |> El.maximum 500)
+                   , El.spacing <| spaceScale 1
+                   , El.padding <| spaceScale 3
+                   , El.clipX
+                   , El.scrollbarX
+                   ]
+            )
+            [ El.link styles.repoLink
                 { label = El.text repo.repoName
                 , url = repo.htmlUrl
                 }
-            , El.el
-                [ Font.color colorPalette.darkestGrey
-                , Font.size <| fontScale 0
-                ]
+            , El.el styles.repoStarsCount
                 <| El.text ("★ " ++ prettyInt repo.stars)
             , Maybe.map viewDescription repo.description
                 |> Maybe.withDefault El.none

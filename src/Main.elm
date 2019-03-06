@@ -387,7 +387,7 @@ spaceScale windowSize =
     let
         baseSpace =
             if deviceIsPhonePortrait windowSize then
-                8
+                6
             else
                 12
     in
@@ -607,7 +607,7 @@ viewRepo windowSize repo =
     in
         El.column
             ((styles windowSize).repo
-                ++ [ El.width (El.fill |> El.minimum 240 |> El.maximum 500)
+                ++ [ El.width (El.fill |> El.minimum 220 |> El.maximum 500)
                    , El.spacing <| spaceScale windowSize 1
                    , El.padding <| spaceScale windowSize 3
                    , El.clipX

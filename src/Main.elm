@@ -177,17 +177,19 @@ fontScale =
     round << El.modular 18 1.25
 
 
-shadowWithBlur blur =
-    { offset = ( 1, 1 )
+shadowWithBlur blur color =
+    { offset = ( 1, -1 )
     , size = 0
     , blur = blur
-    , color = colorPalette.darkestGrey
+    , color =
+        color
+        --colorPalette.fadedPurple
     }
 
 
 colorPalette =
-    { darkPurple = El.rgb 0.19 0.17 0.21
-    , darkestGrey = El.rgb 0.05 0.05 0.05
+    { darkestGrey = El.rgb 0.05 0.05 0.05
+    , fadedPurple = El.rgb 0.19 0.17 0.21
     , darkGrey = El.rgb 0.2 0.2 0.2
     , white = El.rgb 1 1 1
     , lightGrey = El.rgb 0.7 0.7 0.7
@@ -200,54 +202,84 @@ colorPalette =
 styles =
     { root =
         [ Font.size <| fontScale 1
-        , Font.color colorPalette.darkestGrey
-        , Background.color colorPalette.darkPurple
+        , Font.color colorPalette.fadedPurple
+        , Background.color colorPalette.darkestGrey
         ]
     , header =
-        [ Background.color <| colorPalette.darkestGrey
+        [ Background.color <| colorPalette.fadedPurple
         , Font.size <| fontScale 3
         , Font.color colorPalette.grey
         ]
     , headerSubtitle =
         [ Font.size <| fontScale -1
-        , Font.color colorPalette.darkGrey
+        , Font.color colorPalette.darkestGrey
         , Font.center
         ]
     , footer =
-        [ Background.color colorPalette.darkestGrey
+        [ Background.color colorPalette.fadedPurple
         , Font.color colorPalette.grey
         , Font.size <| fontScale -1
-        , Border.color <| colorPalette.darkPurple
+        , Border.color <| colorPalette.darkestGrey
         ]
     , main =
-        [ Border.color <| colorPalette.darkestGrey
+        [ Border.color <| colorPalette.fadedPurple
         , Border.width 3
         ]
     , selector = [ El.pointer ]
     , selectorOption =
-        [ Border.color colorPalette.darkestGrey
+        [ Border.color colorPalette.fadedPurple
         , Font.color colorPalette.grey
         , El.mouseOver [ Font.color colorPalette.lightGrey ]
+        , El.focused [ Font.color colorPalette.red ]
+        , El.mouseDown [ Font.color colorPalette.red ]
         ]
     , button =
-        [ Font.color colorPalette.lightGrey
+        [ Font.color colorPalette.grey
         , Border.color colorPalette.clear
         , Border.rounded 2
-        , Border.shadow <| shadowWithBlur 1
+        , Border.shadow
+            { offset = ( 1, -1 )
+            , size = -1
+            , blur = 1
+            , color = colorPalette.fadedPurple
+            }
         , El.mouseOver
-            [ Font.color colorPalette.red
-            , Border.shadow <| shadowWithBlur 8
+            [ Font.color colorPalette.lightGrey
+            , El.moveDown 1
+            , El.moveLeft 1
+            , Border.shadow
+                { offset = ( 2, -2 )
+                , size = -2
+                , blur = 1
+                , color = colorPalette.fadedPurple
+                }
             ]
+        , El.focused [ Font.color colorPalette.red ]
+        , El.mouseDown [ Font.color colorPalette.red ]
         ]
     , company =
-        [ Background.color colorPalette.darkPurple ]
+        [ Background.color colorPalette.darkestGrey ]
     , repo =
-        [ Background.color colorPalette.darkPurple
-        , Border.color colorPalette.darkestGrey
+        [ Background.color colorPalette.darkestGrey
+        , Border.color colorPalette.fadedPurple
         , Border.width 0
         , Border.rounded 2
-        , Border.shadow <| shadowWithBlur 1
-        , El.mouseOver [ Border.shadow <| shadowWithBlur 8 ]
+        , Border.shadow
+            { offset = ( 1, -1 )
+            , size = -1
+            , blur = 1
+            , color = colorPalette.fadedPurple
+            }
+        , El.mouseOver
+            [ El.moveDown 1
+            , El.moveLeft 1
+            , Border.shadow
+                { offset = ( 2, -2 )
+                , size = -2
+                , blur = 1
+                , color = colorPalette.fadedPurple
+                }
+            ]
         ]
     , repoLink =
         [ Font.color colorPalette.lightGrey
@@ -261,7 +293,7 @@ styles =
         , Font.color colorPalette.grey
         ]
     , repoStarsCount =
-        [ Font.color colorPalette.darkestGrey
+        [ Font.color colorPalette.fadedPurple
         , Font.size <| fontScale 0
         ]
     }
@@ -282,7 +314,7 @@ viewRoot model =
             [ El.focusStyle
                 { borderColor = Just colorPalette.red
                 , backgroundColor = Nothing
-                , shadow = Just <| shadowWithBlur 0
+                , shadow = Nothing
                 }
             ]
         }
@@ -373,9 +405,9 @@ viewOption key title isSelected =
                , Events.onClick <| SelectCompany key
                , Background.color
                     <| if isSelected then
-                        colorPalette.darkPurple
-                       else
                         colorPalette.darkestGrey
+                       else
+                        colorPalette.fadedPurple
                ]
         )
         <| El.text title
@@ -423,9 +455,10 @@ viewRepos company =
             El.el
                 [ El.centerX
                 , El.centerY
-                , Font.color colorPalette.grey
+                , Font.color colorPalette.red
+                , Font.light
                 ]
-                <| El.text "One moment please ..."
+                <| El.text "(^,..,^)  One moment please ..."
     in
         El.el
             [ El.width El.fill
@@ -443,7 +476,7 @@ viewRepos company =
                                 <| List.map viewRepo repos
 
                         Err error ->
-                            viewNotLoaded (Just "Hmm, something went wrong. Try again?")
+                            viewNotLoaded (Just "Hmmm, something went wrong. Try again?")
 
                 NotLoaded ->
                     viewNotLoaded Nothing

@@ -446,7 +446,7 @@ viewHeader windowSize =
         , El.paragraph ((styles windowSize).headerSubtitle ++ [ El.centerX, El.centerY ])
             [ El.text
                 <| "Sink your teeth into the repositories "
-                ++ "of the biggest, most red-blooded companies in tech."
+                ++ "of tech's most red-blooded companies."
             ]
         ]
 

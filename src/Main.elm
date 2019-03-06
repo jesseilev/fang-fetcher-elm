@@ -1,6 +1,9 @@
 module Main exposing (..)
 
 import Browser
+import Time
+import Http
+import Json.Decode as Json exposing (Decoder)
 import Html as Html exposing (Html)
 import Element as El exposing (Element)
 import Element.Input as Input
@@ -8,8 +11,6 @@ import Element.Events as Events
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
-import Http
-import Json.Decode as Json exposing (Decoder)
 import List.Extra as ListEx
 import NumberSuffix as Number
 
@@ -22,7 +23,7 @@ main =
         , update = update
         , view =
             \model ->
-                { title = "FANG Fetcher"
+                { title = "FANG FETCHER"
                 , body = [ viewRoot model ]
                 }
         }
@@ -46,7 +47,7 @@ type alias Company =
 
 
 type Repos
-    = Loading
+    = Loading Int
     | Loaded (Result Http.Error (List Repo))
     | NotLoaded
 
@@ -83,13 +84,30 @@ initCompany =
     Company NotLoaded
 
 
+isFetching : Model -> Bool
+isFetching model =
+    let
+        companyIsLoading c =
+            case c.repos of
+                Loading _ ->
+                    True
+
+                _ ->
+                    False
+    in
+        List.any companyIsLoading model.companies
+
+
 
 -- SUBSCRIPTIONS
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    if isFetching model then
+        Time.every 250 LoadingTick
+    else
+        Sub.none
 
 
 
@@ -101,6 +119,7 @@ type Msg
     | SelectCompany String
     | RequestRepos String
     | GotRepos String (Result Http.Error (List Repo))
+    | LoadingTick Time.Posix
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -114,7 +133,7 @@ update msg model =
             let
                 updateReposInCompany company =
                     if company.githubOrgName == githubOrgName then
-                        { company | repos = Loading }
+                        { company | repos = Loading 0 }
                     else
                         company
             in
@@ -138,6 +157,19 @@ update msg model =
                         company
             in
                 { model | companies = List.map updateReposInCompany model.companies }
+                    |> withNoCmds
+
+        LoadingTick _ ->
+            let
+                incrementTick company =
+                    case company.repos of
+                        Loading ticksSinceLoadStart ->
+                            { company | repos = Loading <| ticksSinceLoadStart + 1 }
+
+                        _ ->
+                            company
+            in
+                { model | companies = List.map incrementTick model.companies }
                     |> withNoCmds
 
         _ ->
@@ -225,10 +257,14 @@ styles =
     , selectorOption =
         [ Border.color colorPalette.fadedPurple
         , Font.color colorPalette.grey
-        , El.mouseOver [ Font.color colorPalette.lightGrey ]
+        , El.mouseOver
+            [ Font.color <| El.rgb 0.6 0.6 0.6
+            ]
         , El.focused [ Font.color colorPalette.red ]
         , El.mouseDown [ Font.color colorPalette.red ]
         ]
+    , selectorOptionAcronymLetter =
+        [ Font.color colorPalette.lightGrey ]
     , button =
         [ Font.color colorPalette.grey
         , Border.color colorPalette.clear
@@ -339,11 +375,11 @@ viewHeader =
             [ El.centerX
             , El.centerY
             ]
-            <| El.text "FANG Fetcher"
+            <| El.text "F A N G   F E T C H E R"
         , El.paragraph (styles.headerSubtitle ++ [ El.centerX, El.centerY ])
             [ El.text
                 <| "Sink your teeth into the repositories "
-                ++ "of tech's most eternally young-blooded companies."
+                ++ "of the biggest, most red-blooded companies in tech."
             ]
         ]
 
@@ -362,6 +398,23 @@ viewFooter =
             , url = "https://github.com/jesseilev/fang-fetcher-elm"
             }
         ]
+
+
+viewVampire : Int -> Element Msg
+viewVampire dripCount =
+    let
+        viewLine color lineContent =
+            El.el [ Font.color color ]
+                <| El.text lineContent
+    in
+        El.column
+            [ El.alignBottom
+            , Font.size <| fontScale 1
+            , Font.bold
+            ]
+            <| (viewLine colorPalette.lightGrey asciiVampire)
+            :: List.map (viewLine colorPalette.red)
+                (List.repeat dripCount asciiBloodDrip)
 
 
 viewMain : Model -> Element Msg
@@ -406,7 +459,11 @@ viewOption key title isSelected =
                         colorPalette.fadedPurple
                ]
         )
-        <| El.text title
+        <| El.row []
+            [ El.el styles.selectorOptionAcronymLetter
+                <| El.text (String.left 1 title)
+            , El.text <| String.dropLeft 1 title
+            ]
 
 
 viewCompany : Company -> Element Msg
@@ -443,18 +500,21 @@ viewRepos company =
                     { onPress = Just <| RequestRepos company.githubOrgName
                     , label =
                         El.el [ El.centerX ]
-                            <| El.text ("Load repos from " ++ company.companyName)
+                            <| El.text ("Fetch repos from " ++ company.companyName)
                     }
                 ]
 
-        viewLoading =
+        viewLoading ticksSinceLoadStart =
             El.el
                 [ El.centerX
-                , El.centerY
-                , Font.color colorPalette.red
-                , Font.light
+                , El.paddingEach
+                    { top = spaceScale 6
+                    , bottom = 0
+                    , left = 0
+                    , right = 0
+                    }
                 ]
-                <| El.text "(^,..,^)  One moment please ..."
+                (viewVampire ticksSinceLoadStart)
     in
         El.el
             [ El.width El.fill
@@ -477,8 +537,8 @@ viewRepos company =
                 NotLoaded ->
                     viewNotLoaded Nothing
 
-                Loading ->
-                    viewLoading
+                Loading ticksSinceLoadStart ->
+                    viewLoading ticksSinceLoadStart
 
 
 viewRepo : Repo -> Element Msg
@@ -495,6 +555,7 @@ viewRepo repo =
                    , El.padding <| spaceScale 3
                    , El.clipX
                    , El.scrollbarX
+                   , Font.alignLeft
                    ]
             )
             [ El.link styles.repoLink
@@ -506,6 +567,14 @@ viewRepo repo =
             , Maybe.map viewDescription repo.description
                 |> Maybe.withDefault El.none
             ]
+
+
+asciiVampire =
+    "(^,..,^)"
+
+
+asciiBloodDrip =
+    "    '"
 
 
 

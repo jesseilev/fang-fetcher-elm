@@ -209,15 +209,12 @@ fontScale =
 
 
 colorPalette =
-    { darkestGrey = El.rgb 0.05 0.05 0.05
-    , fadedPurple = El.rgb 0.19 0.17 0.21
-    , darkGrey = El.rgb 0.2 0.2 0.2
-    , white = El.rgb 1 1 1
-    , lightGrey = El.rgb 0.7 0.7 0.7
+    { lighterGrey = El.rgb 0.7 0.7 0.7
+    , lightGrey = El.rgb 0.6 0.6 0.6
     , grey = El.rgb 0.4 0.4 0.4
+    , darkestGrey = El.rgb 0.05 0.05 0.05
+    , fadedPurple = El.rgb 0.19 0.17 0.21
     , red = El.rgb 0.99 0.1 0.2
-    , clear = El.rgba 0 0 0 0
-    , mediumLightGrey = El.rgb 0.6 0.6 0.6
     }
 
 
@@ -250,7 +247,7 @@ styles =
         , Border.color <| colorPalette.darkestGrey
         ]
     , footerLink =
-        [ El.mouseOver [ Font.color colorPalette.lightGrey ] ]
+        [ El.mouseOver [ Font.color colorPalette.lighterGrey ] ]
     , main =
         [ Border.color <| colorPalette.fadedPurple
         , Border.width 3
@@ -261,7 +258,7 @@ styles =
         , Font.color colorPalette.grey
         , Font.size <| fontScale -1
         , El.mouseOver
-            [ Font.color <| colorPalette.mediumLightGrey
+            [ Font.color <| colorPalette.lightGrey
             ]
         , El.focused [ Font.color colorPalette.red ]
         , El.mouseDown [ Font.color colorPalette.red ]
@@ -269,11 +266,10 @@ styles =
     , selectorOptionAcronymLetter =
         [ Font.size <| fontScale 4
         , El.alignBottom
-          --, Font.color colorPalette.mediumLightGrey
+          --, Font.color colorPalette.lightGrey
         ]
     , button =
         [ Font.color colorPalette.grey
-        , Border.color colorPalette.clear
         , Border.rounded 2
         , Border.shadow
             { offset = ( 1, -1 )
@@ -282,7 +278,7 @@ styles =
             , color = colorPalette.fadedPurple
             }
         , El.mouseOver
-            [ Font.color colorPalette.lightGrey
+            [ Font.color colorPalette.lighterGrey
             , El.moveDown 1
             , El.moveLeft 1
             , Border.shadow
@@ -318,7 +314,7 @@ styles =
             ]
         ]
     , repoLink =
-        [ Font.color colorPalette.lightGrey
+        [ Font.color colorPalette.lighterGrey
         , Font.extraLight
         , Font.size <| fontScale 0
         , El.mouseOver [ Font.color colorPalette.red ]
@@ -422,7 +418,7 @@ viewVampire dripCount =
             , Font.size <| fontScale 1
             , Font.bold
             ]
-            <| (viewLine colorPalette.lightGrey asciiVampire)
+            <| (viewLine colorPalette.lighterGrey asciiVampire)
             :: List.map (viewLine colorPalette.red)
                 (List.repeat dripCount asciiBloodDrip)
 

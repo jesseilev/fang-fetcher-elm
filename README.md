@@ -1,14 +1,6 @@
 # fang-fetcher-elm
 ```
 (^,..,^)
-  '
-  
-  '
-  '
-  
-  '
-  
-  '
 ```
 
 A mildly vampire-themed example Elm app that fetches info from GitHub. 

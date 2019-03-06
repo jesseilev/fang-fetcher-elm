@@ -10,7 +10,7 @@ import Element.Border as Border
 import Element.Font as Font
 import Http
 import Json.Decode as Json exposing (Decoder)
-import Dict exposing (Dict)
+import List.Extra as ListEx
 import NumberSuffix as Number
 
 
@@ -30,7 +30,7 @@ main =
 
 type alias Model =
     { selectedCompany : String
-    , companies : Dict String Company
+    , companies : List Company
     }
 
 
@@ -59,12 +59,17 @@ initApp : ( Model, Cmd Msg )
 initApp =
     { selectedCompany = "Facebook"
     , companies =
-        Dict.fromList
-            [ ( "Facebook", initCompany "Facebook" "facebook" )
-            , ( "Amazon", initCompany "Amazon" "amzn" )
-            , ( "Netflix", initCompany "Netflix" "netflix" )
-            , ( "Google", initCompany "Google" "google" )
-            ]
+        [ initCompany "Facebook" "facebook"
+        , initCompany "Amazon" "amzn"
+        , initCompany "Netflix" "netflix"
+        , initCompany "Google" "google"
+        ]
+        --Dict.fromList
+        --    [ ( "Facebook", initCompany "Facebook" "facebook" )
+        --    , ( "Amazon", initCompany "Amazon" "amzn" )
+        --    , ( "Netflix", initCompany "Netflix" "netflix" )
+        --    , ( "Google", initCompany "Google" "google" )
+        --    ]
     }
         |> withNoCmds
 
@@ -103,13 +108,13 @@ update msg model =
 
         RequestRepos githubOrgName ->
             let
-                updateReposInCompany _ company =
+                updateReposInCompany company =
                     if company.githubOrgName == githubOrgName then
                         { company | repos = Loading }
                     else
                         company
             in
-                ( { model | companies = Dict.map updateReposInCompany model.companies }
+                ( { model | companies = List.map updateReposInCompany model.companies }
                 , Http.get
                     { url = githubUrl githubOrgName
                     , expect = Http.expectJson (GotRepos githubOrgName) reposDecoder
@@ -122,13 +127,13 @@ update msg model =
                     Result.map (List.take 30) result
                         |> Debug.log "result"
 
-                updateReposInCompany _ company =
+                updateReposInCompany company =
                     if company.githubOrgName == githubOrgName then
                         { company | repos = Loaded top5ReposResult }
                     else
                         company
             in
-                { model | companies = Dict.map updateReposInCompany model.companies }
+                { model | companies = List.map updateReposInCompany model.companies }
                     |> withNoCmds
 
         _ ->
@@ -166,8 +171,8 @@ githubUrl githubOrgName =
 
 colorPalette =
     { darkPurple = El.rgb 0.17 0.15 0.18
-    , darkestGrey = El.rgb 0.04 0.04 0.04
-    , darkGrey = El.rgb 0.23 0.23 0.23
+    , darkestGrey = El.rgb 0.05 0.05 0.05
+    , darkGrey = El.rgb 0.2 0.2 0.2
     , white = El.rgb 1 1 1
     , lightGrey = El.rgb 0.7 0.7 0.7
     , grey = El.rgb 0.4 0.4 0.4
@@ -230,12 +235,10 @@ view model =
 viewHeader : Element Msg
 viewHeader =
     El.column
-        [ El.paddingXY (paddingScale 3) (paddingScale 3)
+        [ El.padding <| paddingScale 4
         , El.width <| El.fill
         , Background.color <| colorPalette.darkestGrey
-        , El.spacing 8
-        , Border.widthXY 0 3
-        , Border.color colorPalette.darkPurple
+        , El.spacing <| paddingScale 2
         ]
         [ El.el
             [ Font.size <| fontScale 3
@@ -246,8 +249,8 @@ viewHeader =
             <| El.text "FANG Fetcher"
         , El.paragraph
             [ Font.size <| fontScale -1
-            , Font.light
-            , Font.italic
+              --, Font.light
+              --, Font.italic
             , Font.color colorPalette.darkGrey
             , Font.center
             , El.centerX
@@ -269,6 +272,7 @@ viewFooter =
         , Background.color colorPalette.darkestGrey
         , Font.color colorPalette.grey
         , Font.size <| fontScale -1
+        , Border.color <| colorPalette.darkPurple
         ]
         [ El.link []
             { label = El.text " Github"
@@ -281,14 +285,14 @@ viewMain : Model -> Element Msg
 viewMain model =
     El.column
         [ El.centerX
-        , El.width (El.fill |> El.minimum 300 |> El.maximum 900)
+        , El.width (El.fill |> El.minimum 300 |> El.maximum 950)
         , El.height El.fill
         , Border.color <| colorPalette.darkestGrey
         , Border.width 3
         ]
         [ viewSelector model
-        , Maybe.map viewCompany
-            (Dict.get model.selectedCompany model.companies)
+        , ListEx.find (\c -> c.companyName == model.selectedCompany) model.companies
+            |> Maybe.map viewCompany
             |> Maybe.withDefault El.none
         ]
 
@@ -306,7 +310,7 @@ viewSelector model =
             , El.spaceEvenly
             , El.pointer
             ]
-            <| List.map viewCompanyOption (Dict.values model.companies)
+            <| List.map viewCompanyOption model.companies
 
 
 viewOption : String -> String -> Bool -> Element Msg
@@ -397,7 +401,7 @@ viewRepos company =
                         Ok repos ->
                             El.wrappedRow
                                 [ El.spaceEvenly
-                                , El.spacing <| paddingScale 3
+                                , El.spacing <| paddingScale 4
                                 , El.padding <| paddingScale 4
                                 ]
                                 <| List.map viewRepo repos

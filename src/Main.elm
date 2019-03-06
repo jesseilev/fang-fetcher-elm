@@ -16,11 +16,15 @@ import NumberSuffix as Number
 
 main : Program () Model Msg
 main =
-    Browser.element
+    Browser.document
         { init = \_ -> initApp
         , subscriptions = subscriptions
         , update = update
-        , view = viewRoot
+        , view =
+            \model ->
+                { title = "FANG Fetcher"
+                , body = [ viewRoot model ]
+                }
         }
 
 

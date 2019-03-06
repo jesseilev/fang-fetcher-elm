@@ -148,7 +148,6 @@ update msg model =
             let
                 top5ReposResult =
                     Result.map (List.take 18) result
-                        |> Debug.log "result"
 
                 updateReposInCompany company =
                     if company.githubOrgName == githubOrgName then
@@ -249,6 +248,8 @@ styles =
         , Font.size <| fontScale -1
         , Border.color <| colorPalette.darkestGrey
         ]
+    , footerLink =
+        [ El.mouseOver [ Font.color colorPalette.lightGrey ] ]
     , main =
         [ Border.color <| colorPalette.fadedPurple
         , Border.width 3
@@ -390,12 +391,18 @@ viewFooter =
         (styles.footer
             ++ [ El.width El.fill
                , El.padding <| spaceScale 1
+               , El.spacing <| spaceScale 2
                , El.alignBottom
                ]
         )
-        [ El.link []
-            { label = El.text "Github"
+        [ El.link (styles.footerLink ++ [ El.alignRight ])
+            { label = El.text "View source on Github"
             , url = "https://github.com/jesseilev/fang-fetcher-elm"
+            }
+        , El.text "|"
+        , El.link (styles.footerLink ++ [ El.alignRight ])
+            { label = El.text "What's the deal with FANG?"
+            , url = "https://www.investopedia.com/terms/f/fang-stocks-fb-amzn.asp"
             }
         ]
 

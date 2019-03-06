@@ -26,7 +26,7 @@ main =
         , update = update
         , view =
             \model ->
-                { title = "FANG FETCHER"
+                { title = "FANG Fetcher"
                 , body = [ viewRoot model ]
                 }
         }
@@ -441,8 +441,9 @@ viewHeader windowSize =
         [ El.el
             [ El.centerX
             , El.centerY
+            , Font.letterSpacing 15
             ]
-            <| El.text "F A N G   F E T C H E R"
+            <| El.text "FANG Fetcher"
         , El.paragraph ((styles windowSize).headerSubtitle ++ [ El.centerX, El.centerY ])
             [ El.text
                 <| "Sink your teeth into the repositories "
@@ -467,7 +468,7 @@ viewFooter windowSize =
             }
         , El.text "|"
         , El.link ((styles windowSize).footerLink ++ [ El.alignRight ])
-            { label = El.text "What's the deal with FANG?"
+            { label = El.text "Huh? What is FANG"
             , url = "https://www.investopedia.com/terms/f/fang-stocks-fb-amzn.asp"
             }
         ]

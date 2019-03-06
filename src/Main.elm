@@ -177,16 +177,6 @@ fontScale =
     round << El.modular 18 1.25
 
 
-shadowWithBlur blur color =
-    { offset = ( 1, -1 )
-    , size = 0
-    , blur = blur
-    , color =
-        color
-        --colorPalette.fadedPurple
-    }
-
-
 colorPalette =
     { darkestGrey = El.rgb 0.05 0.05 0.05
     , fadedPurple = El.rgb 0.19 0.17 0.21
@@ -203,6 +193,12 @@ styles =
     { root =
         [ Font.size <| fontScale 1
         , Font.color colorPalette.fadedPurple
+        , Font.family
+            [ Font.external
+                { name = "Laila"
+                , url = "https://fonts.googleapis.com/css?family=Laila"
+                }
+            ]
         , Background.color colorPalette.darkestGrey
         ]
     , header =
@@ -211,7 +207,7 @@ styles =
         , Font.color colorPalette.grey
         ]
     , headerSubtitle =
-        [ Font.size <| fontScale -1
+        [ Font.size <| fontScale 0
         , Font.color colorPalette.darkestGrey
         , Font.center
         ]
@@ -389,7 +385,7 @@ viewSelector model =
     let
         viewCompanyOption c =
             viewOption c.companyName
-                c.companyName
+                (String.toUpper c.companyName)
                 (c.companyName == model.selectedCompany)
     in
         El.row (styles.selector ++ [ El.width El.fill, El.spaceEvenly ])

@@ -217,6 +217,7 @@ colorPalette =
     , grey = El.rgb 0.4 0.4 0.4
     , red = El.rgb 0.99 0.1 0.2
     , clear = El.rgba 0 0 0 0
+    , mediumLightGrey = El.rgb 0.6 0.6 0.6
     }
 
 
@@ -258,14 +259,18 @@ styles =
     , selectorOption =
         [ Border.color colorPalette.fadedPurple
         , Font.color colorPalette.grey
+        , Font.size <| fontScale -1
         , El.mouseOver
-            [ Font.color <| El.rgb 0.6 0.6 0.6
+            [ Font.color <| colorPalette.mediumLightGrey
             ]
         , El.focused [ Font.color colorPalette.red ]
         , El.mouseDown [ Font.color colorPalette.red ]
         ]
     , selectorOptionAcronymLetter =
-        [ Font.color colorPalette.lightGrey ]
+        [ Font.size <| fontScale 4
+        , El.alignBottom
+          --, Font.color colorPalette.mediumLightGrey
+        ]
     , button =
         [ Font.color colorPalette.grey
         , Border.color colorPalette.clear
@@ -281,9 +286,9 @@ styles =
             , El.moveDown 1
             , El.moveLeft 1
             , Border.shadow
-                { offset = ( 2, -2 )
+                { offset = ( 1, -1 )
                 , size = -2
-                , blur = 1
+                , blur = 8
                 , color = colorPalette.fadedPurple
                 }
             ]
@@ -304,12 +309,10 @@ styles =
             , color = colorPalette.fadedPurple
             }
         , El.mouseOver
-            [ El.moveDown 1
-            , El.moveLeft 1
-            , Border.shadow
-                { offset = ( 2, -2 )
+            [ Border.shadow
+                { offset = ( 1, -1 )
                 , size = -2
-                , blur = 1
+                , blur = 8
                 , color = colorPalette.fadedPurple
                 }
             ]

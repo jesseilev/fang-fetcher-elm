@@ -1,6 +1,9 @@
 module Main exposing (..)
 
 import Browser
+import Browser.Events
+import Browser.Dom
+import Task
 import Time
 import Http
 import Json.Decode as Json exposing (Decoder)
@@ -36,6 +39,7 @@ main =
 type alias Model =
     { selectedCompany : String
     , companies : List Company
+    , windowSize : WindowSize
     }
 
 
@@ -60,23 +64,26 @@ type alias Repo =
     }
 
 
+type alias WindowSize =
+    { width : Int
+    , height : Int
+    }
+
+
 initApp : ( Model, Cmd Msg )
 initApp =
-    { selectedCompany = "Facebook"
-    , companies =
-        [ initCompany "Facebook" "facebook"
-        , initCompany "Amazon" "amzn"
-        , initCompany "Netflix" "netflix"
-        , initCompany "Google" "google"
-        ]
-        --Dict.fromList
-        --    [ ( "Facebook", initCompany "Facebook" "facebook" )
-        --    , ( "Amazon", initCompany "Amazon" "amzn" )
-        --    , ( "Netflix", initCompany "Netflix" "netflix" )
-        --    , ( "Google", initCompany "Google" "google" )
-        --    ]
-    }
-        |> withNoCmds
+    ( { selectedCompany = "Facebook"
+      , companies =
+            [ initCompany "Facebook" "facebook"
+            , initCompany "Amazon" "amzn"
+            , initCompany "Netflix" "netflix"
+            , initCompany "Google" "google"
+            ]
+      , windowSize = WindowSize 0 0
+      }
+    , Task.perform windowResizeFromViewport
+        Browser.Dom.getViewport
+    )
 
 
 initCompany : String -> String -> Company
@@ -98,16 +105,24 @@ isFetching model =
         List.any companyIsLoading model.companies
 
 
+windowResizeFromViewport : Browser.Dom.Viewport -> Msg
+windowResizeFromViewport { viewport } =
+    WindowResize (round viewport.width) (round viewport.height)
+
+
 
 -- SUBSCRIPTIONS
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    if isFetching model then
-        Time.every 250 LoadingTick
-    else
-        Sub.none
+    Sub.batch
+        [ Browser.Events.onResize WindowResize
+        , if isFetching model then
+            Time.every 250 LoadingTick
+          else
+            Sub.none
+        ]
 
 
 
@@ -120,6 +135,7 @@ type Msg
     | RequestRepos String
     | GotRepos String (Result Http.Error (List Repo))
     | LoadingTick Time.Posix
+    | WindowResize Int Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -171,6 +187,10 @@ update msg model =
                 { model | companies = List.map incrementTick model.companies }
                     |> withNoCmds
 
+        WindowResize w h ->
+            { model | windowSize = { width = w, height = h } }
+                |> withNoCmds
+
         _ ->
             model |> withNoCmds
 
@@ -204,8 +224,28 @@ githubUrl githubOrgName =
 -- STYLES
 
 
-fontScale =
-    round << El.modular 18 1.25
+deviceIsPhonePortrait windowSize =
+    let
+        device =
+            El.classifyDevice windowSize
+    in
+        case ( device.class, device.orientation ) of
+            ( El.Phone, El.Portrait ) ->
+                True
+
+            _ ->
+                False
+
+
+fontScale windowSize =
+    let
+        baseFontSize =
+            if deviceIsPhonePortrait windowSize then
+                15
+            else
+                17
+    in
+        round << El.modular baseFontSize 1.25
 
 
 colorPalette =
@@ -218,9 +258,9 @@ colorPalette =
     }
 
 
-styles =
+styles windowSize =
     { root =
-        [ Font.size <| fontScale 1
+        [ Font.size <| fontScale windowSize 1
         , Font.color colorPalette.fadedPurple
         , Font.family
             [ Font.external
@@ -232,18 +272,18 @@ styles =
         ]
     , header =
         [ Background.color <| colorPalette.fadedPurple
-        , Font.size <| fontScale 3
+        , Font.size <| fontScale windowSize 3
         , Font.color colorPalette.grey
         ]
     , headerSubtitle =
-        [ Font.size <| fontScale 0
+        [ Font.size <| fontScale windowSize 0
         , Font.color colorPalette.darkestGrey
         , Font.center
         ]
     , footer =
         [ Background.color colorPalette.fadedPurple
         , Font.color colorPalette.grey
-        , Font.size <| fontScale -1
+        , Font.size <| fontScale windowSize -1
         , Border.color <| colorPalette.darkestGrey
         ]
     , footerLink =
@@ -256,7 +296,11 @@ styles =
     , selectorOption =
         [ Border.color colorPalette.fadedPurple
         , Font.color colorPalette.grey
-        , Font.size <| fontScale -1
+        , Font.size
+            <| if deviceIsPhonePortrait windowSize then
+                fontScale windowSize -2
+               else
+                fontScale windowSize -1
         , El.mouseOver
             [ Font.color <| colorPalette.lightGrey
             ]
@@ -264,7 +308,11 @@ styles =
         , El.mouseDown [ Font.color colorPalette.red ]
         ]
     , selectorOptionAcronymLetter =
-        [ Font.size <| fontScale 4
+        [ Font.size
+            <| if deviceIsPhonePortrait windowSize then
+                fontScale windowSize 2
+               else
+                fontScale windowSize 3
         , El.alignBottom
           --, Font.color colorPalette.lightGrey
         ]
@@ -316,17 +364,17 @@ styles =
     , repoLink =
         [ Font.color colorPalette.lighterGrey
         , Font.extraLight
-        , Font.size <| fontScale 0
+        , Font.size <| fontScale windowSize 0
         , El.mouseOver [ Font.color colorPalette.red ]
         ]
     , repoDescription =
-        [ Font.size <| fontScale -1
+        [ Font.size <| fontScale windowSize -1
         , Font.light
         , Font.color colorPalette.grey
         ]
     , repoStarsCount =
         [ Font.color colorPalette.fadedPurple
-        , Font.size <| fontScale 0
+        , Font.size <| fontScale windowSize 0
         ]
     }
 
@@ -335,8 +383,23 @@ styles =
 -- VIEW
 
 
-spaceScale =
-    round << El.modular 12 1.5
+spaceScale windowSize =
+    let
+        baseSpace =
+            if deviceIsPhonePortrait windowSize then
+                9
+            else
+                12
+    in
+        round << El.modular baseSpace 1.5
+
+
+maxMainWidth =
+    1000
+
+
+minMainWidth =
+    320
 
 
 viewRoot : Model -> Html Msg
@@ -350,25 +413,29 @@ viewRoot model =
                 }
             ]
         }
-        (styles.root ++ [ El.height El.fill, El.scrollbarY ])
+        ((styles model.windowSize).root ++ [ El.height El.fill, El.scrollbarY ])
         <| El.column
             [ El.width El.fill
             , El.height El.fill
-            , El.spacing <| spaceScale 4
+            , El.spacing
+                <| if maxMainWidth < model.windowSize.width then
+                    spaceScale model.windowSize 4
+                   else
+                    0
             ]
-            [ viewHeader
+            [ viewHeader model.windowSize
             , viewMain model
-            , viewFooter
+            , viewFooter model.windowSize
             ]
 
 
-viewHeader : Element Msg
-viewHeader =
+viewHeader : WindowSize -> Element Msg
+viewHeader windowSize =
     El.column
-        (styles.header
-            ++ [ El.padding <| spaceScale 4
+        ((styles windowSize).header
+            ++ [ El.padding <| spaceScale windowSize 4
                , El.width <| El.fill
-               , El.spacing <| spaceScale 2
+               , El.spacing <| spaceScale windowSize 2
                ]
         )
         [ El.el
@@ -376,7 +443,7 @@ viewHeader =
             , El.centerY
             ]
             <| El.text "F A N G   F E T C H E R"
-        , El.paragraph (styles.headerSubtitle ++ [ El.centerX, El.centerY ])
+        , El.paragraph ((styles windowSize).headerSubtitle ++ [ El.centerX, El.centerY ])
             [ El.text
                 <| "Sink your teeth into the repositories "
                 ++ "of the biggest, most red-blooded companies in tech."
@@ -384,57 +451,40 @@ viewHeader =
         ]
 
 
-viewFooter : Element Msg
-viewFooter =
+viewFooter : WindowSize -> Element Msg
+viewFooter windowSize =
     El.row
-        (styles.footer
+        ((styles windowSize).footer
             ++ [ El.width El.fill
-               , El.padding <| spaceScale 1
-               , El.spacing <| spaceScale 2
+               , El.padding <| spaceScale windowSize 1
+               , El.spacing <| spaceScale windowSize 2
                , El.alignBottom
                ]
         )
-        [ El.link (styles.footerLink ++ [ El.alignRight ])
+        [ El.link ((styles windowSize).footerLink ++ [ El.alignRight ])
             { label = El.text "View source on Github"
             , url = "https://github.com/jesseilev/fang-fetcher-elm"
             }
         , El.text "|"
-        , El.link (styles.footerLink ++ [ El.alignRight ])
+        , El.link ((styles windowSize).footerLink ++ [ El.alignRight ])
             { label = El.text "What's the deal with FANG?"
             , url = "https://www.investopedia.com/terms/f/fang-stocks-fb-amzn.asp"
             }
         ]
 
 
-viewVampire : Int -> Element Msg
-viewVampire dripCount =
-    let
-        viewLine color lineContent =
-            El.el [ Font.color color ]
-                <| El.text lineContent
-    in
-        El.column
-            [ El.alignBottom
-            , Font.size <| fontScale 1
-            , Font.bold
-            ]
-            <| (viewLine colorPalette.lighterGrey asciiVampire)
-            :: List.map (viewLine colorPalette.red)
-                (List.repeat dripCount asciiBloodDrip)
-
-
 viewMain : Model -> Element Msg
 viewMain model =
     El.column
-        (styles.main
+        ((styles model.windowSize).main
             ++ [ El.centerX
-               , El.width (El.fill |> El.minimum 300 |> El.maximum 950)
+               , El.width (El.fill |> El.minimum minMainWidth |> El.maximum maxMainWidth)
                , El.height El.fill
                ]
         )
         [ viewSelector model
         , ListEx.find (\c -> c.companyName == model.selectedCompany) model.companies
-            |> Maybe.map viewCompany
+            |> Maybe.map (viewCompany model.windowSize)
             |> Maybe.withDefault El.none
         ]
 
@@ -443,19 +493,20 @@ viewSelector : Model -> Element Msg
 viewSelector model =
     let
         viewCompanyOption c =
-            viewOption c.companyName
+            viewOption model.windowSize
+                c.companyName
                 (String.toUpper c.companyName)
                 (c.companyName == model.selectedCompany)
     in
-        El.row (styles.selector ++ [ El.width El.fill, El.spaceEvenly ])
+        El.row ((styles model.windowSize).selector ++ [ El.width El.fill, El.spaceEvenly ])
             <| List.map viewCompanyOption model.companies
 
 
-viewOption : String -> String -> Bool -> Element Msg
-viewOption key title isSelected =
+viewOption : WindowSize -> String -> String -> Bool -> Element Msg
+viewOption windowSize key title isSelected =
     El.el
-        (styles.selectorOption
-            ++ [ El.padding <| spaceScale 2
+        ((styles windowSize).selectorOption
+            ++ [ El.padding <| spaceScale windowSize 2
                , El.width <| El.fillPortion 1
                , Events.onClick <| SelectCompany key
                , Background.color
@@ -466,27 +517,27 @@ viewOption key title isSelected =
                ]
         )
         <| El.row []
-            [ El.el styles.selectorOptionAcronymLetter
+            [ El.el (styles windowSize).selectorOptionAcronymLetter
                 <| El.text (String.left 1 title)
             , El.text <| String.dropLeft 1 title
             ]
 
 
-viewCompany : Company -> Element Msg
-viewCompany company =
+viewCompany : WindowSize -> Company -> Element Msg
+viewCompany windowSize company =
     El.column
-        (styles.company
+        ((styles windowSize).company
             ++ [ El.width El.fill
                , El.height El.fill
                , El.height El.fill
                ]
         )
-        [ viewRepos company
+        [ viewRepos windowSize company
         ]
 
 
-viewRepos : Company -> Element Msg
-viewRepos company =
+viewRepos : WindowSize -> Company -> Element Msg
+viewRepos windowSize company =
     let
         viewNotLoaded maybeError =
             El.column
@@ -497,10 +548,10 @@ viewRepos company =
                 ]
                 [ El.text <| Maybe.withDefault "" maybeError
                 , Input.button
-                    (styles.button
+                    ((styles windowSize).button
                         ++ [ El.centerX
                            , El.centerY
-                           , El.padding <| spaceScale 4
+                           , El.padding <| spaceScale windowSize 4
                            ]
                     )
                     { onPress = Just <| RequestRepos company.githubOrgName
@@ -514,13 +565,13 @@ viewRepos company =
             El.el
                 [ El.centerX
                 , El.paddingEach
-                    { top = spaceScale 6
+                    { top = spaceScale windowSize 6
                     , bottom = 0
                     , left = 0
                     , right = 0
                     }
                 ]
-                (viewVampire ticksSinceLoadStart)
+                (viewVampire windowSize ticksSinceLoadStart)
     in
         El.el
             [ El.width El.fill
@@ -532,10 +583,10 @@ viewRepos company =
                         Ok repos ->
                             El.wrappedRow
                                 [ El.spaceEvenly
-                                , El.spacing <| spaceScale 4
-                                , El.padding <| spaceScale 4
+                                , El.spacing <| spaceScale windowSize 4
+                                , El.padding <| spaceScale windowSize 4
                                 ]
-                                <| List.map viewRepo repos
+                                <| List.map (viewRepo windowSize) repos
 
                         Err error ->
                             viewNotLoaded (Just "Hmmm, something went wrong. Try again?")
@@ -547,32 +598,49 @@ viewRepos company =
                     viewLoading ticksSinceLoadStart
 
 
-viewRepo : Repo -> Element Msg
-viewRepo repo =
+viewRepo : WindowSize -> Repo -> Element Msg
+viewRepo windowSize repo =
     let
         viewDescription description =
-            El.paragraph styles.repoDescription
+            El.paragraph (styles windowSize).repoDescription
                 [ El.text description ]
     in
         El.column
-            (styles.repo
-                ++ [ El.width (El.fill |> El.minimum 250 |> El.maximum 500)
-                   , El.spacing <| spaceScale 1
-                   , El.padding <| spaceScale 3
+            ((styles windowSize).repo
+                ++ [ El.width (El.fill |> El.minimum 240 |> El.maximum 500)
+                   , El.spacing <| spaceScale windowSize 1
+                   , El.padding <| spaceScale windowSize 3
                    , El.clipX
                    , El.scrollbarX
                    , Font.alignLeft
                    ]
             )
-            [ El.link styles.repoLink
+            [ El.link (styles windowSize).repoLink
                 { label = El.text repo.repoName
                 , url = repo.htmlUrl
                 }
-            , El.el styles.repoStarsCount
+            , El.el (styles windowSize).repoStarsCount
                 <| El.text ("★ " ++ prettyInt repo.stars)
             , Maybe.map viewDescription repo.description
                 |> Maybe.withDefault El.none
             ]
+
+
+viewVampire : WindowSize -> Int -> Element Msg
+viewVampire windowSize dripCount =
+    let
+        viewLine color lineContent =
+            El.el [ Font.color color ]
+                <| El.text lineContent
+    in
+        El.column
+            [ El.alignBottom
+            , Font.size <| fontScale windowSize 1
+            , Font.bold
+            ]
+            <| (viewLine colorPalette.lighterGrey asciiVampire)
+            :: List.map (viewLine colorPalette.red)
+                (List.repeat dripCount asciiBloodDrip)
 
 
 asciiVampire =

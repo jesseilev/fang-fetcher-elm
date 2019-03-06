@@ -662,7 +662,11 @@ prettyInt =
             Number.standardConfig
 
         config =
-            { standardConfig | getSuffix = Number.suffixStandardShort }
+            { standardConfig
+                | getSuffix = Number.suffixStandardShort
+                , minSuffix = 1000
+                , sigfigs = 2
+            }
     in
         Number.format config << toFloat
 

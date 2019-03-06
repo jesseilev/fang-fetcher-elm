@@ -288,7 +288,7 @@ styles =
             , Border.shadow
                 { offset = ( 1, -1 )
                 , size = -2
-                , blur = 8
+                , blur = 5
                 , color = colorPalette.fadedPurple
                 }
             ]
@@ -312,7 +312,7 @@ styles =
             [ Border.shadow
                 { offset = ( 1, -1 )
                 , size = -2
-                , blur = 8
+                , blur = 5
                 , color = colorPalette.fadedPurple
                 }
             ]

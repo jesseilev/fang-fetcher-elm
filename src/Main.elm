@@ -333,7 +333,7 @@ styles windowSize =
                 { offset = ( 1, -1 )
                 , size = -2
                 , blur = 5
-                , color = colorPalette.fadedPurple
+                , color = colorPalette.grey
                 }
             ]
         , El.focused [ Font.color colorPalette.red ]
@@ -347,8 +347,8 @@ styles windowSize =
         , Border.width 0
         , Border.rounded 2
         , Border.shadow
-            { offset = ( 1, -1 )
-            , size = -1
+            { offset = ( 2, -2 )
+            , size = -2
             , blur = 1
             , color = colorPalette.fadedPurple
             }
@@ -357,7 +357,7 @@ styles windowSize =
                 { offset = ( 1, -1 )
                 , size = -2
                 , blur = 5
-                , color = colorPalette.fadedPurple
+                , color = colorPalette.grey
                 }
             ]
         ]

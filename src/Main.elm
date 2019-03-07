@@ -272,6 +272,9 @@ styles windowSize =
         ]
     , header =
         [ Background.color <| colorPalette.fadedPurple
+        ]
+    , headerTitle =
+        [ Font.letterSpacing 12
         , Font.size <| fontScale windowSize 3
         , Font.color colorPalette.grey
         ]
@@ -438,11 +441,7 @@ viewHeader windowSize =
                , El.spacing <| spaceScale windowSize 2
                ]
         )
-        [ El.el
-            [ El.centerX
-            , El.centerY
-            , Font.letterSpacing 15
-            ]
+        [ El.el ((styles windowSize).headerTitle ++ [ El.centerX, El.centerY ])
             <| El.text "FANG Fetcher"
         , El.paragraph ((styles windowSize).headerSubtitle ++ [ El.centerX, El.centerY ])
             [ El.text

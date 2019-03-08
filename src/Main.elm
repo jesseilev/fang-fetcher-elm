@@ -412,7 +412,7 @@ viewRoot model =
                 }
             ]
         }
-        ((styles model.windowSize).root ++ [ El.height El.fill ])
+        ((styles model.windowSize).root ++ [ El.height El.fill, El.scrollbarY ])
         <| El.column
             [ El.width El.fill
             , El.height El.fill
@@ -476,7 +476,6 @@ viewMain model =
             ++ [ El.centerX
                , El.width (El.fill |> El.minimum minMainWidth |> El.maximum maxMainWidth)
                , El.height El.fill
-               , El.scrollbarY
                ]
         )
         [ viewSelector model

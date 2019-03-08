@@ -237,13 +237,16 @@ deviceIsPhonePortrait windowSize =
                 False
 
 
+fontScale : WindowSize -> Int -> Int
 fontScale windowSize =
     let
         baseFontSize =
-            if deviceIsPhonePortrait windowSize then
-                15
-            else
-                17
+            11 + 0.01 * toFloat (min windowSize.width windowSize.height)
+
+        --if deviceIsPhonePortrait windowSize then
+        --    15
+        --else
+        --    17
     in
         round << El.modular baseFontSize 1.25
 
@@ -279,7 +282,7 @@ styles windowSize =
         , Font.color colorPalette.grey
         ]
     , headerSubtitle =
-        [ Font.size <| fontScale windowSize 0
+        [ Font.size <| fontScale windowSize -1
         , Font.color colorPalette.darkestGrey
         , Font.center
         ]
@@ -323,7 +326,7 @@ styles windowSize =
         [ Font.color colorPalette.grey
         , Border.rounded 2
         , Border.shadow
-            { offset = ( 1, -1 )
+            { offset = ( 1, -2 )
             , size = -1
             , blur = 1
             , color = colorPalette.fadedPurple
@@ -333,9 +336,9 @@ styles windowSize =
             , El.moveDown 1
             , El.moveLeft 1
             , Border.shadow
-                { offset = ( 1, -1 )
+                { offset = ( 1, -2 )
                 , size = -2
-                , blur = 5
+                , blur = 2
                 , color = colorPalette.grey
                 }
             ]
@@ -345,10 +348,7 @@ styles windowSize =
     , company =
         [ Background.color colorPalette.darkestGrey ]
     , repo =
-        [ Background.color colorPalette.darkestGrey
-        , Border.color colorPalette.fadedPurple
-        , Border.width 0
-        , Border.rounded 2
+        [ Border.rounded 2
         , Border.shadow
             { offset = ( 2, -2 )
             , size = -2
@@ -357,16 +357,15 @@ styles windowSize =
             }
         , El.mouseOver
             [ Border.shadow
-                { offset = ( 1, -1 )
+                { offset = ( 1, -2 )
                 , size = -2
-                , blur = 5
+                , blur = 2
                 , color = colorPalette.grey
                 }
             ]
         ]
     , repoLink =
         [ Font.color colorPalette.lighterGrey
-        , Font.extraLight
         , Font.size <| fontScale windowSize 0
         , El.mouseOver [ Font.color colorPalette.red ]
         ]
@@ -389,10 +388,7 @@ styles windowSize =
 spaceScale windowSize =
     let
         baseSpace =
-            if deviceIsPhonePortrait windowSize then
-                6
-            else
-                12
+            6 + 0.5 * 0.01 * toFloat (min windowSize.width windowSize.height)
     in
         round << El.modular baseSpace 1.5
 
@@ -416,7 +412,7 @@ viewRoot model =
                 }
             ]
         }
-        ((styles model.windowSize).root ++ [ El.height El.fill, El.scrollbarY ])
+        ((styles model.windowSize).root ++ [ El.height El.fill ])
         <| El.column
             [ El.width El.fill
             , El.height El.fill
@@ -436,7 +432,7 @@ viewHeader : WindowSize -> Element Msg
 viewHeader windowSize =
     El.column
         ((styles windowSize).header
-            ++ [ El.padding <| spaceScale windowSize 4
+            ++ [ El.padding <| spaceScale windowSize 5
                , El.width <| El.fill
                , El.spacing <| spaceScale windowSize 2
                ]
@@ -480,6 +476,7 @@ viewMain model =
             ++ [ El.centerX
                , El.width (El.fill |> El.minimum minMainWidth |> El.maximum maxMainWidth)
                , El.height El.fill
+               , El.scrollbarY
                ]
         )
         [ viewSelector model
@@ -528,7 +525,6 @@ viewCompany windowSize company =
     El.column
         ((styles windowSize).company
             ++ [ El.width El.fill
-               , El.height El.fill
                , El.height El.fill
                ]
         )
@@ -607,9 +603,9 @@ viewRepo windowSize repo =
     in
         El.column
             ((styles windowSize).repo
-                ++ [ El.width (El.fill |> El.minimum 220 |> El.maximum 500)
+                ++ [ El.width (El.fill |> El.minimum 210 |> El.maximum 500)
                    , El.spacing <| spaceScale windowSize 1
-                   , El.padding <| spaceScale windowSize 3
+                   , El.padding <| spaceScale windowSize 4
                    , El.clipX
                    , El.scrollbarX
                    , Font.alignLeft
